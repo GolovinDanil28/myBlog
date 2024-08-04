@@ -1,14 +1,22 @@
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import Post
 from django.shortcuts import render, get_object_or_404
 
 def post_list(request):
-    posts_list = Post.published.all()
-    paginator = Paginator(posts_list, 3)
+    post_list = Post.published.all()
+    # Постраничная разбивка с 3 постами на страницу
+    paginator = Paginator(post_list, 3)
     page_number = request.GET.get('page', 1)
-    posts = paginator.paginate(page_number)
-    return render(request, 'blog/post/list.html', {'posts': posts})
+    try:
+        posts = paginator.page(page_number)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    return render(request,
+                  'blog/post/list.html',
+                  {'posts': posts})
 
 def post_detail(request, year, month, day, post):
     post = get_object_or_404(Post,
